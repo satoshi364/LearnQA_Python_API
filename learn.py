@@ -1,29 +1,30 @@
 import requests
+import time
 
-url = "https://playground.learnqa.ru/ajax/api/compare_query_type"
+def create_job():
+    url = "https://playground.learnqa.ru/ajax/api/longtime_job"
+    response = requests.get(url)
+    return response.json()
 
-response_1 = requests.get(url)
-print("1. Запрос без параметра method:", response_1.text)
+def check_status_and_result(token):
+    url = "https://playground.learnqa.ru/ajax/api/longtime_job"
+    params = {"token": token}
+    response = requests.get(url, params=params)
+    return response.json()
 
-response_2 = requests.head(url)
-print("2. Запрос не из списка (HEAD):", response_2.status_code)
+print("1. Creating job")
+job_info = create_job()
+token = job_info["token"]
+seconds_to_wait = job_info["seconds"]
 
-valid_method = "POST"
-params = {"method": valid_method}
-response_3 = requests.post(url, data=params)
-print(f"3. Запрос с правильным значением method ({valid_method}):", response_3.text)
+status_before_waiting = check_status_and_result(token)["status"]
+print(f"2. Status before waiting: {status_before_waiting}")
 
-print("4. Проверка всех возможных сочетаний:")
-methods = ["GET", "POST", "PUT", "DELETE"]
-for method in methods:
-    for mismatch_method in methods:
-        params = {"method": mismatch_method}
-        if method == "GET":
-            response = requests.get(url, params=params)
-        else:
-            response = requests.request(method, url, data=params)
+time.sleep(seconds_to_wait)
 
-        if response.status_code == 200:
-            print(f"Совпадение! Тип запроса: {method}, Значение method: {mismatch_method}")
-        else:
-            print(f"Несовпадение. Тип запроса: {method}, Значение method: {mismatch_method}, Код ответа: {response.status_code}")
+status_after_waiting = check_status_and_result(token)["status"]
+result_after_waiting = check_status_and_result(token).get("result")
+
+print(f"3. Status after waiting: {status_after_waiting}")
+if result_after_waiting:
+    print(f"4. Result after waiting: {result_after_waiting}")
